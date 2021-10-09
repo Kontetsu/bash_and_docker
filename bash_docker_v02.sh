@@ -1,3 +1,51 @@
+#!/bin/bash
+####################################################################
+# Made by Erget Kabaj                                              #
+# This is a script to automate Docker and docker compose and build #
+# an image also build an docker composer                           #
+####################################################################
+set -e
+
+echo "Downloading Docker and installing it"
+
+echo "Removing any Packages that may be residual in the system"
+
+sudo apt-get remove docker \
+                    docker-engine \
+                    docker.io \
+                    containerd \
+                    runc
+
+echo "Updating the System"
+
+sudo apt-get update
+
+sudo apt-get install \
+            apt-transport-https \
+            ca-certificates \
+            curl \
+            gnupg \
+            lsb-release
+
+echo "Add Docker’s official GPG key"
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install \
+                docker-ce \
+                docker-ce-cli \
+                containerd.io
+
+
+echo "Starting Docker"
+
+systemctl start docker
+systemctl enable docker
 
 echo "Testting if docker is installed correctly"
 
@@ -19,7 +67,7 @@ git clone https://github.com/remy/html5demos.git
 
 cat << EOF > Dockerfile
 FROM httpd:latest
-COPY ./html5demos/ /usr/local/apache2/htdocs/
+COPY ./html5demos/www/ /usr/local/apache2/htdocs/
 EXPOSE 80
 EOF
 
@@ -46,25 +94,24 @@ cat << EOF > docker-compose.yml
 version: "3.7"
 services:
   httpd:
-    build: httd_test:v01
-    expose: 
+    build: . 
+    ports: 
       - 81:80
   nginx:
     image: nginx:latest
     volumes: 
-      - /html5demos/www/:/usr/share/nginx/html
-    expose: 
+      - ./html5demos/www/:/usr/share/nginx/html
+    ports: 
       - 82:80
-volumes:
-  /html5demos/www/
+
 EOF
 
 docker-compose build && docker-compose up -d
 
-test_run_httpd=$(docker ps | awk {'print $2'} | grep httd_test:v01)
+test_run_httpd=$(docker ps | awk {'print $2'} | grep docker_test)
 STATS=$(echo $?)
 
-if [[ $test_run_httpd = "httd_test:v01" ]]
+if [[ $test_run_httpd = "docker_test" ]]
 then
     echo "Build Succesfull"
     echo "Go to localhost:81 to see the HTTP webpage build by docker compose"

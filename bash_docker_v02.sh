@@ -108,10 +108,10 @@ EOF
 
 docker-compose build && docker-compose up -d
 
-test_run_httpd=$(docker ps | awk {'print $2'} | grep docker_test)
+test_run_httpd=$(docker ps | awk {'print $2'} | grep docker_test_httpd)
 STATS=$(echo $?)
 
-if [[ $test_run_httpd = "docker_test" ]]
+if [[ $test_run_httpd = "docker_test_httpd" ]]
 then
     echo "Build Succesfull"
     echo "Go to localhost:81 to see the HTTP webpage build by docker compose"
